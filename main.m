@@ -34,7 +34,11 @@ function func = input2Step(mat)
     f = 0;
     for i = 1:n
         r = mat(i,:);
-        f = f + r(1) * stepf(x - r(2), r(3));
+        if r(3) < 0
+            f = f + r(1) * stepf(x - r(2), r(3));
+        else
+            f = f + buildStep(r(1), r(2), r(2), r(3));
+        end
     end
     func = f;
 end
