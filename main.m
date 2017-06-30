@@ -24,39 +24,8 @@ function Y = main(mat, bound, len, show)
     end
     
     % output
-    goPlot(symshow, configs, len);
+    plotPrint(symshow, configs, len);
     Y = configs;
-end
-
-function goPlot(symshow, configs, len)
-    syms x;
-    global namedict;
-    for i = 1:length(symshow)
-        f = symshow(i);
-        fun(x) = configs(f{1});
-        disp(namedict(f{1}));
-        disp(fun);
-        subplot(length(symshow), 1, i);
-        fplot(fun, [0, len]);
-        
-        % impulus
-        hold on;
-        [cof, sf] = coeffs(fun);
-        cof = cof(x) ; % why it is function
-        sf = children(sf);
-        for j = 1:length(sf)
-            s3 = [cof(j) sf{j}];
-            if length(s3) ~= 3
-                continue
-            elseif s3(3) == -1
-                stem(-s3(2) + x, s3(1));
-            elseif s3(3) == -2
-                stem(-s3(2) + x, s3(1), 'filled');
-            end
-        end
-        hold off;
-        title(namedict(f{1}));
-    end
 end
 
 function func = input2Step(mat)
