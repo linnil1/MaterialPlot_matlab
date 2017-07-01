@@ -5,18 +5,34 @@ function plotPrint(symshow, configs, len)
         f = symshow(i);
         fun(x) = configs(f{1});
         disp(namedict(f{1}));
-        disp(fun);
+        % disp(fun);
         subplot(length(symshow), 1, i);
         fplot(fun, [0, len]);
         title(namedict(f{1}));
 
         % addition data
         hold on;
-        terms = sumTerms(fun);
+        [terms, remain] = sumTerms(fun);
         impulusDraw(terms);
         minmaxFind(fun, terms, len);
+        dispStep(terms, remain);
+        ax = gca;
+        ax.XAxisLocation = 'origin';
         hold off;
     end
+end
+
+function dispStep(terms, remain)
+    tx = '';
+    if remain
+        tx = char(remain);
+    end
+    terms = sortrows(terms,[2 3]);
+    for t = terms'
+        tx = [tx sprintf(' %c%s * <%s>%s', ...
+            logical(t(1) > 0) * '+', t)];
+    end
+     disp(tx);
 end
 
 function impulusDraw(terms)
@@ -35,6 +51,9 @@ function impulusDraw(terms)
 end
 
 function minmaxFind(fun, terms, len)
+    if isempty(terms)
+        return
+    end
     syms x;
     interval = unique(sort([x - terms(:,2)', 0, len]));
     allxy = [];

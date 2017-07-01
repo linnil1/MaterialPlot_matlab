@@ -1,31 +1,65 @@
-function Y = main(mat, bound, len, show)
+function Y = main(mat, bound, len, show, weight)
     % input example
     % mat [a 0 -1; b 6 -1; -1 2 -2]
     % bound table({'V'; 'M'},[len ;len], [0 ;0])
     % len 6
     % show = 'F,V,M'
-    
+
     % init
     syms x;
     read(symengine, 'Stepfunc.mu');
     symshow = strsplit(show, ',');
     symuse = unique([symshow, bound{:,1}']);
-    
+
+    % set weight
+    if nargin == 4
+        weight = [1 0 len];
+    end
+    weight = allWei(weight, len);
+
     % set config
-    configs = setconfig(input2Step(mat));
+    configs = setconfig(input2Step(mat), weight);
     for f = symuse
         configs(f{1}) = recurGet(configs, f{1});
     end
-    
+
     % solve
     solved = boundSolve(bound, configs);
     for f = symuse
         configs(f{1}) = subs(configs(f{1}), solved);
     end
-    
+
     % output
     plotPrint(symshow, configs, len);
     Y = configs;
+end
+
+function wei = allWei(weight, len)
+    weight = sortrows(weight, 2);
+    wei = [];
+    s = 0;
+    for w = weight'
+        if s < w(2)
+            wei(end + 1,:) = [1 s w(2)];
+        end
+        wei(end + 1,:) = w;
+        s = w(3);
+    end
+    if s < len
+        wei(end + 1,:) = [1 s len];
+    end
+end
+
+function weifun = rebuildWei(fun, weight)
+    weifun = fun;
+    for wei = weight'
+        if wei(1) ~= 1
+            now_expr = expand(fun, 'MaxExponent', wei(2));
+            up_fun = buildStep((wei(1) - 1) * now_expr,...
+                0, wei(2), wei(3));
+            weifun = weifun + up_fun;
+        end
+    end
 end
 
 function func = input2Step(mat)
@@ -48,10 +82,13 @@ function solved = boundSolve(bound, configs)
     syms x;
     for i = 1:height(bound)
         f = bound{i,1};
-        alleq = [alleq(:); subs(configs(f{1}) - bound{i,3}, x, bound{i,2})];
+        alleq = [alleq(:); ...
+            subs(configs(f{1}) - bound{i,3}, x, bound{i,2})];
     end
-    solved = solve(alleq);    
-
+    solved = solve(alleq);
+    if length(symvar(alleq)) == 1 % matlab is bad
+        solved = struct(char(symvar(alleq)), solved);
+    end
     % output
     names = fieldnames(solved)';
     showans = {};
@@ -70,8 +107,8 @@ function formula = recurGet(configs, want)
     formula =  now;
 end
 
-function config = setconfig(f)
-    syms x c1 c2;   
+function config = setconfig(f, weight)
+    syms x c1 c2;
     % be aware of the integral is fake, it is diff in real 
     keySet =  {...
         'F', f,...
@@ -80,14 +117,15 @@ function config = setconfig(f)
         'dy', @(config)(c1 + integralStep(recurGet(config, 'M'))),...
         'y', @(config)(c1 * x + c2 + integralStep(recurGet(config, 'dy'))),...
         'Fint', @(config)(-integralStep(recurGet(config, 'F'))),...
-        'P', @()(1),...
+        'P', @(config)(rebuildWei(recurGet(config, 'Fint'), weight)),...
         'dx',@(config)(integralStep(recurGet(config, 'P'))),...
         'T', f,...
         'Tint', @(config)(-integralStep(recurGet(config, 'T'))),...
-        'A', @()(1)};
+        'A', @(config)(integralStep( ...
+            rebuildWei(recurGet(config, 'Tint'), weight)))};
     len  = length(keySet);
     config = containers.Map(keySet(1:2:len), keySet(2:2:len));
-    
+
     %name
     keyName =   {'F',    'V'    ,'M'     ,'dy'              ,'y',...
         'T'     ,'Fint'          ,'P'       ,'dx'            ,...

@@ -1,26 +1,38 @@
 function expr = buildStep(fun, sori, sstart, send)
     syms x;
-    sstart = eval(sstart);
-    send = eval(send);
+    if isa(sstart, 'sym')
+        sstart = eval(sstart);
+    end
+    if isa(send, 'sym')
+        send = eval(send);
+    end
 
     read(symengine, 'Stepfunc.mu');
-    fun = subs(fun, x - sori);
+    fun = subs(fun, x, x - sori);
     up_cof = taylorcoeff(fun, sstart);
     up_expr = coefftaylor(up_cof, sstart, true);
     dn_cof = taylorcoeff(-coefftaylor(up_cof, sstart), send);
     dn_expr = coefftaylor(dn_cof, send, true);
     expr = up_expr + dn_expr;
-    fplot(expr,[0 5]);
+    % fplot(expr,[0 5]);
 end
 
 
 function cof = taylorcoeff(fun, a)
-    p = sym2poly(fun);
+    syms x;
     num = 0;
     cof = [];
-    while any(p)
-        cof(end + 1) = polyval(p, a) / factorial(num);
-        p = polyder(p);
+    % numberic methods
+%     p = sym2poly(fun);
+%     while any(p)
+%         cof(end + 1) = polyval(p, a) / factorial(num);
+%         p = polyder(p);
+%         num = num + 1;
+%     end
+    % sym methods
+    while logical(fun ~= 0)
+        cof = [cof, subs(fun, x, a) / factorial(num)];
+        fun = diff(fun ,x);
         num = num + 1;
     end
 end
