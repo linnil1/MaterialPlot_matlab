@@ -29,7 +29,7 @@ end
 function dispStep(terms, remain)
     syms x;
     tx = '';
-    if remain
+    if logical(remain ~= 0)
         tx = char(remain);
     end
     terms = sortrows(terms,[2 3]);
@@ -82,8 +82,7 @@ function minmaxFind(fun, terms, len)
     % format text and output
     alltext = {};
     for i = 1:length(allxy)
-        alltext{i} = strcat(num2str(allxy(i, 1)), ...
-            ',', num2str(allxy(i, 2))) ;
+        alltext{i} = sprintf("%.2f,%.2f",allxy(i,:));
     end
     text(allxy(:,1), allxy(:,2), alltext);
 end

@@ -58,6 +58,9 @@ and other place will multiply by 1
 
 input number only
 
+# demo picture
+![demojpg](http://i.imgur.com/4iWPE1q.jpg)
+
 
 # some messy things
 
