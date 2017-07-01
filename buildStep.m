@@ -1,4 +1,5 @@
 function expr = buildStep(fun, sori, sstart, send)
+    % turn polynoimal function to step function
     syms x;
     if isa(sstart, 'sym')
         sstart = eval(sstart);
@@ -6,8 +7,8 @@ function expr = buildStep(fun, sori, sstart, send)
     if isa(send, 'sym')
         send = eval(send);
     end
-
     read(symengine, 'Stepfunc.mu');
+
     fun = subs(fun, x, x - sori);
     up_cof = taylorcoeff(fun, sstart);
     up_expr = coefftaylor(up_cof, sstart, true);
@@ -17,7 +18,7 @@ function expr = buildStep(fun, sori, sstart, send)
     % fplot(expr,[0 5]);
 end
 
-
+% build-in taylor function is not good
 function cof = taylorcoeff(fun, a)
     syms x;
     num = 0;
@@ -37,6 +38,7 @@ function cof = taylorcoeff(fun, a)
     end
 end
 
+% convert back
 function fun = coefftaylor(cof, a, ~)
     syms x;
     fun = 0;
@@ -48,7 +50,8 @@ function fun = coefftaylor(cof, a, ~)
         end
     end
 end
-        
+
+% deplicated
 function sf = stepf(a,n)
     sf = feval(symengine, 'Stepfunc', a, n);
 end

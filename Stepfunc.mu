@@ -23,7 +23,7 @@ local n, a;
 begin
     a := op(f)[1];
     n := op(f)[2];
-    if n = -1 
+    if n = -1
         then Stepfunc(a, n + 1)
     else
         Stepfunc(a, n + 1) / (n + 1)
